@@ -1,0 +1,66 @@
+import speech_recognition as sr
+import pyttsx3
+import openai
+
+# Set up the OpenAI API key
+openai.api_key = "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"
+
+# Set up the speech recognition engine
+r = sr.Recognizer()
+
+# Set up the text-to-speech engine
+engine = pyttsx3.init()
+
+# Define the voice properties
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id) # Use the first voice
+
+# Define the speak function
+def speak(text):
+    try:
+        engine.say(text)
+        engine.runAndWait()
+    except:
+        print("Error: Could not speak the text.")
+
+# Define the listen function
+def listen():
+    with sr.Microphone() as source:
+        r.adjust_for_ambient_noise(source)
+        audio = r.listen(source)
+        try:
+            text = r.recognize_google(audio)
+            return text
+        except:
+            print("Error: Could not recognize the speech.")
+            return None
+
+# Define the generate_response function
+def generate_response(prompt):
+    try:
+        response = openai.Completion.create(
+            engine="davinci", # the name of the OpenAI language model to use
+            prompt=prompt, # the prompt to send to the AI
+            max_tokens=250, # the maximum number of tokens in the AI's response
+            n=1, # the number of responses to generate
+            stop=None, # the stopping sequence for the AI
+            temperature=0.5 # the "creativity" of the AI's responses
+        )
+        message = response.choices[0].text.strip()
+        return message
+    except:
+        print("Error: Could not generate a response.")
+        return None
+
+# Define the conversation function
+def start_conversation():
+    speak("How can I help you?")
+    while True:
+        text = listen()
+        if text:
+            response = generate_response(text)
+            if response:
+                speak(response)
+
+# Start the conversation
+start_conversation()
